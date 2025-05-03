@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Step 1: 유튜브 정보 입력</title>
+  <style>
+    label {
+      display: inline-block;
+      width: 180px;
+      margin-bottom: 8px;
+    }
+    input[type="text"], input[type="number"] {
+      width: 400px;
+      padding: 5px;
+    }
+    button {
+      margin-top: 12px;
+      padding: 8px 20px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Step 1: 유튜브 정보 입력</h2>
+  <form action="/" method="post" onsubmit="return validateTimeRange()">
+    <label>제목 (필수):</label>
+    <input type="text" name="title" required><br>
+
+    <label>YouTube URL (필수):</label>
+    <input type="text" name="url" required><br>
+
+    <label>저장 경로 (선택):</label>
+    <input type="text" name="output_root_dir" placeholder="예: C:/Users/..."><br>
+
+    <label>시작 시간 (선택):</label>
+    <input
+      type="text"
+      name="start_time"
+      placeholder="예: 01:00"
+      pattern="^\d{2}:\d{2}$"
+      oninvalid="this.setCustomValidity('시작 시간은 00:00 형식으로 입력해 주세요')"
+      oninput="this.setCustomValidity('')"
+    /><br>
+
+    <label>종료 시간 (선택):</label>
+    <input
+      type="text"
+      name="end_time"
+      placeholder="예: 03:00"
+      pattern="^\d{2}:\d{2}$"
+      oninvalid="this.setCustomValidity('종료 시간은 00:00 형식으로 입력해 주세요')"
+      oninput="this.setCustomValidity('')"
+    /><br>
+
+    <label>BPM (선택):</label>
+    <input type="number" name="bpm" placeholder="예: 90"><br>
+
+    <button type="submit">가이드 이미지 생성</button>
+  </form>
+
+    <script>
+        function validateTimeRange() {
+            const start = document.getElementsByName("start_time")[0].value;
+            const end = document.getElementsByName("end_time")[0].value;
+
+            if (!start || !end) return true;
+
+            const [sMin, sSec] = start.split(":").map(Number);
+            const [eMin, eSec] = end.split(":").map(Number);
+
+            const startSec = sMin * 60 + sSec;
+            const endSec = eMin * 60 + eSec;
+
+            if (endSec - startSec > 300) {
+                alert("최대 5분까지만 허용됩니다 (시작~종료).");
+                return false;
+            }
+
+            if (endSec <= startSec) {
+                alert("종료 시간이 시작 시간보다 이후여야 합니다.");
+                return false;
+            }
+
+            return true;
+        }
+    </script>
+</body>
+</html>
