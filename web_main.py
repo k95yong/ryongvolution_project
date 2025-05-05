@@ -1,14 +1,16 @@
 import os
 
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from flask import send_file
 
 from guitar_helper import GuitarHelper
-from settings import VIDEO_SOURCE_DIR
 
 app = Flask(__name__)
 app.secret_key = "secret"  # 세션용 키
 
+@app.route("/health")
+def health_check():
+    return jsonify(status="ok"), 200
 
 @app.route("/", methods=["GET", "POST"])
 def index():
