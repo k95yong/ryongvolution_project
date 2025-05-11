@@ -97,6 +97,7 @@ def process_confirm_y():
 
     gh.capture_video_frame(y_start, y_end)
     gh.remove_duplicate_imgs()
+    gh.apply_bar_numbering_in_dir()
     pdf_path = gh.merge_jpgs_to_pdf()
 
     params = session.get("params")

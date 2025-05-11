@@ -2,7 +2,7 @@ import os
 
 from utils.google_uploader import upload_to_drive
 from utils.util import download_youtube, merge_jpgs_vertically_to_pdf, calculate_bar_duration, \
-    show_capture_guide, capture_video_frame, remove_duplicate_img, show_capture_guide_web
+    show_capture_guide, capture_video_frame, remove_duplicate_img, show_capture_guide_web, apply_bar_numbering_in_dir
 
 
 class GuitarHelper:
@@ -54,6 +54,9 @@ class GuitarHelper:
 
     def remove_duplicate_imgs(self):
         remove_duplicate_img(self.script_dir)
+
+    def apply_bar_numbering_in_dir(self):
+        apply_bar_numbering_in_dir(self.script_dir, 4)
 
     def merge_jpgs_to_pdf(self):
         return merge_jpgs_vertically_to_pdf(self.script_dir, self.pdf_dir, self.title)

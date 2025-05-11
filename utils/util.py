@@ -5,8 +5,6 @@ import tempfile
 import numpy as np
 import yt_dlp
 from skimage.metrics import structural_similarity as ssim
-from datetime import datetime
-from moviepy.editor import VideoFileClip
 
 from utils.cache_util import load_video_cache, add_video_to_cache, cleanup_cache
 
@@ -29,7 +27,6 @@ def download_youtube(url, output_path='downloaded_video.mp4', start_time=None, e
     }
     if not output_path.endswith('.mp4'):
         output_path = output_path + '.mp4'
-
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         ydl.download([url])
@@ -59,6 +56,7 @@ def download_youtube(url, output_path='downloaded_video.mp4', start_time=None, e
     print(f"📝 캐시에 추가됨: {output_path}")
     return output_path
 
+
 def convert_to_hms(timestr):
     """MM:SS 형식을 HH:MM:SS로 바꿔주는 함수"""
     if timestr and ":" in timestr:
@@ -67,14 +65,15 @@ def convert_to_hms(timestr):
             return f"00:{parts[0].zfill(2)}:{parts[1].zfill(2)}"
     return timestr  # 그대로 반환하거나 예외처리
 
+
 def find_cached_video(url, start_time, end_time):
     cache = load_video_cache()
     for entry in cache:
         if (
-            entry["url"] == url and
-            entry["start_time"] == start_time and
-            entry["end_time"] == end_time and
-            os.path.exists(entry["video_path"])
+                entry["url"] == url and
+                entry["start_time"] == start_time and
+                entry["end_time"] == end_time and
+                os.path.exists(entry["video_path"])
         ):
             return entry["video_path"]
     return None
@@ -170,15 +169,32 @@ def show_capture_guide_web(video_path, guide_img_path):
     cap.release()
 
 
-def capture_video_frame(video_path, output_dir, interval_sec=5, y_start=60, y_end=100):
+import cv2
+import shutil
+import tempfile
+
+
+def seconds_to_timestamp(seconds):
+    minutes = int(seconds // 60)
+    secs = int(seconds % 60)
+    return f"{minutes:02d}-{secs:02d}"
+
+
+def format_bar_range(index, bars_per_image=4):
+    start_bar = index * bars_per_image + 1
+    end_bar = start_bar + bars_per_image - 1
+    return f"{start_bar}-{end_bar}"
+
+
+def capture_video_frame(video_path, output_dir, interval_sec=5, y_start=60, y_end=100, bars_per_image=4):
     if os.path.exists(output_dir):
         shutil.rmtree(output_dir)
     os.makedirs(output_dir, exist_ok=True)
-    cap = cv2.VideoCapture(video_path)
 
+    cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
         print("비디오 열기 실패")
-        return
+        return []
 
     fps = cap.get(cv2.CAP_PROP_FPS)
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -191,87 +207,99 @@ def capture_video_frame(video_path, output_dir, interval_sec=5, y_start=60, y_en
     crop_end_y = int(height * (y_end / 100))
     if crop_start_y > crop_end_y:
         print("캡처 영역을 올바르게 지정하세요.")
-        return
+        return []
 
     frame_idx = 0
+    saved_files = []
+    image_count = 0
 
     while frame_idx < total_frames:
         cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
         ret, frame = cap.read()
-
         if not ret:
             break
 
         crop_image = frame[crop_start_y:crop_end_y, :]
         gray_image = cv2.cvtColor(crop_image, cv2.COLOR_BGR2GRAY)
 
-        current_time_sec = frame_idx / fps
-        timestamp = seconds_to_timestamp(current_time_sec)
+        timestamp = seconds_to_timestamp(frame_idx / fps)
+        filename = f"time_{timestamp}.jpg"
 
         temp_dir = tempfile.gettempdir()
-        temp_save_path = os.path.join(temp_dir, f"temp_{timestamp}.jpg")
+        temp_save_path = os.path.join(temp_dir, f"temp_{filename}")
 
-        cv2.imwrite(temp_save_path, gray_image)
         success = cv2.imwrite(temp_save_path, gray_image)
         if success:
-            print(f"Saved {temp_save_path}")
-            final_save_path = os.path.join(output_dir, f"frame_{timestamp}.jpg")
+            final_save_path = os.path.join(output_dir, filename)
             shutil.move(temp_save_path, final_save_path)
+            print(f"Saved {final_save_path}")
+            saved_files.append(final_save_path)
         else:
             print(f"Failed to save {temp_save_path}")
 
         print(f"bottom_crop size: {gray_image.shape}")
         frame_idx += frame_interval
+        image_count += 1
 
     cap.release()
+    return saved_files
 
 
-def seconds_to_timestamp(sec):
-    h = int(sec // 3600)
-    m = int((sec % 3600) // 60)
-    s = int(sec % 60)
-    return f"{h:02d}_{m:02d}_{s:02d}"
-
-
-from PIL import Image
 import os
+from PIL import Image
+from PyPDF2 import PdfWriter, PdfReader
 
 
-def merge_jpgs_vertically_to_pdf(image_dir, output_pdf_path, pdf_title):
-    # 디렉토리 안에 있는 jpg 파일들 정렬해서 가져오기
+def merge_jpgs_vertically_to_pdf(image_dir, output_pdf_path, pdf_title, dpi=300):
     images = [os.path.join(image_dir, f) for f in sorted(os.listdir(image_dir)) if f.lower().endswith('.jpg')]
     if not images:
         print("jpg 파일이 없습니다.")
         return None
 
-    # 이미지들 로드
-    loaded_images = [Image.open(img_path).convert('RGB') for img_path in images]
-
-    # 각 이미지 크기 가져오기
-    widths, heights = zip(*(img.size for img in loaded_images))
-
-    # 가로 길이는 최대, 세로 길이는 합계
-    max_width = max(widths)
-    total_height = sum(heights)
-
-    # 새 캔버스 생성
-    merged_image = Image.new('RGB', (max_width, total_height), color=(255, 255, 255))
-
-    # 이미지 하나씩 붙이기
-    y_offset = 0
-    for img in loaded_images:
-        merged_image.paste(img, (0, y_offset))
-        y_offset += img.size[1]
-
     os.makedirs(output_pdf_path, exist_ok=True)
     pdf_file_path = os.path.join(output_pdf_path, f"{pdf_title}.pdf")
-    # PDF로 저장
-    merged_image.save(pdf_file_path, "PDF", resolution=100.0)
-    # set_pdf_title(output_pdf_path, pdf_title)
+    output_pdf = PdfWriter()
+
+    a4_width_px = int(595 * dpi / 72)
+    a4_height_px = int(842 * dpi / 72)
+
+    page_number = 1
+    current_canvas = Image.new('RGB', (a4_width_px, a4_height_px), color=(255, 255, 255))
+    y_offset = 0
+
+    for img_path in images:
+        img = Image.open(img_path).convert('RGB')
+        img_ratio = img.width / img.height
+        target_width = a4_width_px
+        target_height = int(target_width / img_ratio)
+
+        if y_offset + target_height > a4_height_px:
+            temp_pdf_path = os.path.join(output_pdf_path, f"temp_page_{page_number}.pdf")
+            current_canvas.save(temp_pdf_path, "PDF", resolution=dpi)
+            temp_reader = PdfReader(temp_pdf_path)
+            output_pdf.add_page(temp_reader.pages[0])
+            os.remove(temp_pdf_path)
+            page_number += 1
+
+            current_canvas = Image.new('RGB', (a4_width_px, a4_height_px), color=(255, 255, 255))
+            y_offset = 0
+
+        resized_img = img.resize((target_width, target_height))
+        current_canvas.paste(resized_img, (0, y_offset))
+        y_offset += target_height
+
+    if y_offset > 0:
+        temp_pdf_path = os.path.join(output_pdf_path, f"temp_page_{page_number}.pdf")
+        current_canvas.save(temp_pdf_path, "PDF", resolution=dpi)
+        temp_reader = PdfReader(temp_pdf_path)
+        output_pdf.add_page(temp_reader.pages[0])
+        os.remove(temp_pdf_path)
+
+    with open(pdf_file_path, 'wb') as f:
+        output_pdf.write(f)
 
     print(f"PDF로 저장 완료: {pdf_file_path}")
     return pdf_file_path
-
 
 
 def calculate_bar_duration(bpm, note_info="4/4"):
@@ -323,19 +351,56 @@ def remove_duplicate_img(image_dir):
             prev_img = img
         else:
             if is_same_sheet(prev_img, img):
-                print(f"중복 이미지로 판단됨 → 이동: {img_path}")
                 shutil.move(img_path, os.path.join(dup_dir, os.path.basename(img_path)))
             prev_img = img
 
+def apply_bar_numbering_in_dir(image_dir, bars_per_image=4):
+    images = [os.path.join(image_dir, f) for f in sorted(os.listdir(image_dir)) if f.lower().endswith('.jpg')]
+    renamed_list = []
+    for index, old_path in enumerate(images):
+        dir_name, old_filename = os.path.split(old_path)
+        name_part, ext = os.path.splitext(old_filename)
 
-def is_same_sheet(img1, img2, threshold=0.95):
+        start_bar = index * bars_per_image + 1
+        end_bar = start_bar + bars_per_image - 1
+
+        new_filename = f"{name_part}_section_{start_bar}-{end_bar}{ext}"
+        new_path = os.path.join(dir_name, new_filename)
+
+        os.rename(old_path, new_path)
+        renamed_list.append(new_path)
+
+    return renamed_list
+
+
+
+def quick_difference(img1, img2, resize_dim=(64, 64), diff_threshold=30):
+    """
+    이미지 크기 축소 후 절대 차이 평균으로 빠른 필터링
+    """
+    img1_small = cv2.resize(img1, resize_dim)
+    img2_small = cv2.resize(img2, resize_dim)
+    diff = cv2.absdiff(img1_small, img2_small)
+    mean_diff = np.mean(diff)
+    return mean_diff < diff_threshold  # 차이가 작으면 True
+
+
+def is_same_sheet(img1, img2, threshold=0.95, quick_diff_threshold=30):
+    """
+    빠른 필터 후 SSIM 비교
+    """
     if len(img1.shape) == 3:
         img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
     if len(img2.shape) == 3:
         img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
 
-    # SSIM 계산
+    # 빠른 필터링
+    if not quick_difference(img1, img2, diff_threshold=quick_diff_threshold):
+        print(f"빠른 필터링 됨")
+        return False
+
+    # SSIM 정밀 비교
     score, _ = ssim(img1, img2, full=True)
-    if 0.8 < score < threshold:
-        print(f"중복 의심: {score}")
+    if score >= threshold:
+        print(f"정밀 비교 필터링: {score}")
     return score >= threshold
