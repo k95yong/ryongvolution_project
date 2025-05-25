@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎸 나만의 기타 연습 웹</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #007bff;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        .feature-item {
+            background-color: #e9ecef;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .feature-item a {
+            text-decoration: none;
+            color: #333;
+            font-weight: bold;
+        }
+        .feature-item span {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin-top: 15px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+        .section-title {
+            color: #28a745;
+            margin-top: 40px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #28a745;
+            padding-bottom: 5px;
+        }
+        .note {
+            color: #dc3545;
+            font-size: 0.8em;
+            margin-top: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎸 악보 커스텀 도우미</h1>
+
+        <section>
+            <h2 class="section-title">주요 기능</h2>
+            <ul class="feature-list">
+                <li class="feature-item">
+                    <a href="{{ url_for('youtube_script') }}">▶️ YouTube 영상에서 악보 추출  </a>
+                    <span>영상에서 악보/TAB를 추출합니다.</span>
+                </li>
+                <li class="feature-item">
+                    <a href="#">🖼️ 이미지 PDF로 합치기</a>
+                    <span>여러 이미지를 하나의 PDF 파일로 만듭니다.</span>
+                </li>
+                <li class="feature-item">
+                    <a href="#">📝 PDF 파일 수정</a>
+                    <span>기존 PDF 파일의 내용을 편집합니다.</span>
+                </li>
+                <li class="feature-item">
+                    <a href="#">⚙️ 설정</a>
+                    <span>개인 설정 및 환경 설정을 관리합니다.</span>
+                </li>
+            </ul>
+        </section>
+
+        <section>
+            <h2 class="section-title">빠른 시작</h2>
+            <p>자주 사용하는 기능을 바로 실행해보세요.</p>
+            <a href="#" class="button">🎶 새로운 작업 시작</a>
+            <a href="#" class="button">🎼 최근 작업 기록</a>
+        </section>
+
+        <p class="note">🛠️ 현재 개발 중인 기능이 있을 수 있습니다.</p>
+    </div>
+</body>
+</html>

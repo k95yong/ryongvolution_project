@@ -1,15 +1,24 @@
-import shutil
 import subprocess
-import tempfile
 
 import numpy as np
 import yt_dlp
 from skimage.metrics import structural_similarity as ssim
 
-from utils.cache_util import load_video_cache, add_video_to_cache, cleanup_cache
+from app.utils.cache_util import load_video_cache, add_video_to_cache, cleanup_cache
+
+
+def format_youtube_url(input_str):
+    """
+    유튜브 URL 또는 Video ID를 받아서 완전한 URL로 변환해 반환
+    """
+    if input_str.startswith("http://") or input_str.startswith("https://"):
+        return input_str
+    else:
+        return f"https://www.youtube.com/watch?v={input_str}"
 
 
 def download_youtube(url, output_path='downloaded_video.mp4', start_time=None, end_time=None):
+    url = format_youtube_url(url)
     start_time = convert_to_hms(start_time)
     end_time = convert_to_hms(end_time)
 
@@ -85,6 +94,41 @@ def reset_directory(dir_path):
     os.makedirs(dir_path)
 
 
+import re
+
+
+def extract_video_id(url):
+    patterns = [
+        r"(?:https?://)?(?:www\.)?youtube\.com/watch\?v=([^&]+)",
+        r"(?:https?://)?youtu\.be/([^?&]+)",
+        r"(?:https?://)?(?:www\.)?youtube\.com/shorts/([^?&]+)",
+        r"(?:https?://)?(?:www\.)?youtube\.com/embed/([^?&]+)",
+    ]
+
+    for pattern in patterns:
+        match = re.search(pattern, url)
+        if match:
+            return match.group(1)
+
+    return url
+
+
+def create_lyrics_template(directory, filename="lyrics_template.txt"):
+    """
+    디렉토리에 가사 템플릿 파일을 생성 (이미 있으면 건너뜀)
+    """
+    file_path = os.path.join(directory, filename)
+    if os.path.exists(file_path):
+        print(f"이미 파일이 존재합니다: {file_path}")
+        return file_path
+
+    with open(file_path, "w", encoding="utf-8") as f:
+        f.write("# 여기에 가사를 줄 단위로 입력하세요.\n")
+
+    print(f"가사 템플릿 파일 생성 완료: {file_path}")
+    return file_path
+
+
 def get_video_duration(video_path):
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
@@ -132,9 +176,6 @@ def show_capture_guide(video_path):
     return
 
 
-import cv2
-
-
 def show_capture_guide_web(video_path, guide_img_path):
     cap = cv2.VideoCapture(video_path)
 
@@ -161,16 +202,16 @@ def show_capture_guide_web(video_path, guide_img_path):
         # 저장 경로
         cv2.imwrite(guide_img_path, frame)
         print(f"가이드 이미지 저장 완료: {guide_img_path}")
+        cap.release()
         return guide_img_path
     else:
         print("가이드 프레임 읽기 실패")
+        cap.release()
         return None
 
-    cap.release()
 
 
 import cv2
-import shutil
 import tempfile
 
 
@@ -186,10 +227,30 @@ def format_bar_range(index, bars_per_image=4):
     return f"{start_bar}-{end_bar}"
 
 
-def capture_video_frame(video_path, output_dir, interval_sec=5, y_start=60, y_end=100, bars_per_image=4):
-    if os.path.exists(output_dir):
-        shutil.rmtree(output_dir)
+import shutil
+
+
+def prepare_directory(output_dir, lyrics_filename="lyrics_template.txt"):
     os.makedirs(output_dir, exist_ok=True)
+
+    lyrics_path = os.path.join(output_dir, lyrics_filename)
+
+    if not os.path.exists(lyrics_path):
+        with open(lyrics_path, "w", encoding="utf-8") as f:
+            f.write("# 여기에 가사를 입력하세요.\n")
+        print(f"{lyrics_filename} 생성 완료: {lyrics_path}")
+
+    for f in os.listdir(output_dir):
+        if f != lyrics_filename:
+            path = os.path.join(output_dir, f)
+            if os.path.isdir(path):
+                shutil.rmtree(path)
+            else:
+                os.remove(path)
+
+
+def capture_video_frame(video_path, output_dir, interval_sec=5, y_start=60, y_end=100, bars_per_image=4):
+    prepare_directory(output_dir)
 
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
@@ -354,6 +415,7 @@ def remove_duplicate_img(image_dir):
                 shutil.move(img_path, os.path.join(dup_dir, os.path.basename(img_path)))
             prev_img = img
 
+
 def apply_bar_numbering_in_dir(image_dir, bars_per_image=4):
     images = [os.path.join(image_dir, f) for f in sorted(os.listdir(image_dir)) if f.lower().endswith('.jpg')]
     renamed_list = []
@@ -371,7 +433,6 @@ def apply_bar_numbering_in_dir(image_dir, bars_per_image=4):
         renamed_list.append(new_path)
 
     return renamed_list
-
 
 
 def quick_difference(img1, img2, resize_dim=(64, 64), diff_threshold=30):
@@ -404,3 +465,15 @@ def is_same_sheet(img1, img2, threshold=0.95, quick_diff_threshold=30):
     if score >= threshold:
         print(f"정밀 비교 필터링: {score}")
     return score >= threshold
+
+def get_root_dir():
+    cur_path = os.path.abspath(os.getcwd())
+    while True:
+        git_dir = os.path.join(cur_path, '.git')
+        if os.path.isdir(git_dir):
+            return cur_path
+        parent_path = os.path.dirname(cur_path)
+        if parent_path == cur_path:
+            return None
+        cur_path = parent_path
+

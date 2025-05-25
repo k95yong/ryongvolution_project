@@ -1,11 +1,12 @@
 import os
 
-from utils.google_uploader import upload_to_drive
-from utils.util import download_youtube, merge_jpgs_vertically_to_pdf, calculate_bar_duration, \
-    show_capture_guide, capture_video_frame, remove_duplicate_img, show_capture_guide_web, apply_bar_numbering_in_dir
+from app.utils.google_uploader import upload_to_drive
+from app.utils.util import download_youtube, merge_jpgs_vertically_to_pdf, calculate_bar_duration, \
+    show_capture_guide, capture_video_frame, remove_duplicate_img, show_capture_guide_web, apply_bar_numbering_in_dir, \
+    extract_video_id, get_root_dir
 
 
-class GuitarHelper:
+class YoutubeScriptBuilder:
     def __init__(self, title, url, output_root_dir: str):
         self.title = title
         self.url = url
@@ -18,7 +19,7 @@ class GuitarHelper:
         self.script_dir = os.path.join(self.output_root_dir, title, "captured_scripts")
         self.pdf_dir = os.path.join(self.output_root_dir, title, "pdfs")
         os.makedirs(self.download_dir, exist_ok=True)
-        self.video_path = os.path.join(self.download_dir, title)
+        self.video_path = os.path.join(self.download_dir, f"{title}_{extract_video_id(url)}")
         self.pdf_path = os.path.join(self.pdf_dir, "{}.pdf".format(title))
         self.start_time = None
         self.end_time = None
@@ -61,8 +62,8 @@ class GuitarHelper:
     def merge_jpgs_to_pdf(self):
         return merge_jpgs_vertically_to_pdf(self.script_dir, self.pdf_dir, self.title)
 
-    def show_capture_guide_web(self, save_path="static/guide.jpg"):
-        show_capture_guide_web(f"{self.video_path}.mp4", save_path)
+    def show_capture_guide_web(self, guide_path=os.path.join(get_root_dir(), "static", "guide.jpg")):
+        show_capture_guide_web(f"{self.video_path}.mp4", guide_path)
 
     def show_capture_guide(self):
         show_capture_guide(f"{self.video_path}.mp4")

@@ -3,18 +3,28 @@ import os
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from flask import send_file
 
-from guitar_helper import GuitarHelper
+from app.utils.util import get_root_dir
+from app.youtube_script.youtube_script_builder import YoutubeScriptBuilder
 
-app = Flask(__name__)
+app = Flask(__name__,
+            template_folder=os.path.join(get_root_dir(), 'app', 'templates'),
+            static_folder=os.path.join(get_root_dir(), 'static'))
 app.secret_key = "secret"  # 세션용 키
 
-@app.route("/health")
+@app.route("/health_check")
 def health_check():
     return jsonify(status="ok"), 200
 
-@app.route("/", methods=["GET", "POST"])
-def index():
+@app.route('/')
+def index_redirect():
+    return redirect(url_for('home'))
 
+@app.route("/home", methods=["GET", "POST"])
+def home():
+    return render_template("home.html")
+
+@app.route("/youtube_script", methods=["GET", "POST"])
+def youtube_script():
     if request.method == "POST":
         title = request.form["title"]
         url = request.form["url"]
@@ -26,14 +36,14 @@ def index():
         if not output_root_dir or output_root_dir.strip() == "":
             output_root_dir = os.path.join(os.path.expanduser("~"), "Downloads")
 
-        gh = GuitarHelper(title, url, output_root_dir)
+        gh = YoutubeScriptBuilder(title, url, output_root_dir)
         gh.set_bpm(bpm)
         gh.start_time = start_time
         gh.end_time = end_time
         gh.set_time_range(start_time, end_time)
 
         gh.download_youtube()
-        gh.show_capture_guide_web(save_path="static/guide.jpg")  # 이미지 저장용 수정된 함수 필요
+        gh.show_capture_guide_web(guide_path=os.path.join(get_root_dir(), "static", "guide.jpg"))
 
         # gh 객체는 세션으로 못 넘기니까 필요한 값만 저장
         session["params"] = {
@@ -47,10 +57,10 @@ def index():
 
         return redirect(url_for("confirm_y"))
 
-    return render_template("index.html")
+    return render_template("youtube_script_info.html")
 
 
-@app.route("/confirm_y", methods=["GET", "POST"])
+@app.route("/youtube_script/confirm_y", methods=["GET", "POST"])
 def confirm_y():
     if request.method == "POST":
         y_start = int(request.form["y_start"])
@@ -59,7 +69,7 @@ def confirm_y():
         # 세션에서 파라미터 가져옴
         p = session.get("params")
         output_path = p['output_root_dir']
-        gh = GuitarHelper(p["title"], p["url"], output_path)
+        gh = YoutubeScriptBuilder(p["title"], p["url"], output_path)
         gh.set_bpm(p["bpm"])
         gh.start_time = p["start_time"]
         gh.end_time = p["end_time"]
@@ -73,25 +83,25 @@ def confirm_y():
 
         params = session.get("params", {})
         params["pdf_path"] = pdf_path
-        session["params"] = params  # 덮어쓰기!
+        session["params"] = params
         return redirect(url_for("download_pdf"))
 
-    return render_template("confirm_y.html", guide_img="/static/guide.jpg")
+    return render_template("confirm_y.html", guide_img=url_for('static', filename='guide.jpg'))
 
 
-@app.route("/start_confirm_y", methods=["POST"])
+@app.route("/youtube_script/start_confirm_y", methods=["POST"])
 def start_confirm_y():
     session["y_start"] = request.form["y_start"]
     session["y_end"] = request.form["y_end"]
-    return render_template("loading.html")  # 로딩 메시지 출력
+    return render_template("loading.html")
 
 
-@app.route("/process_confirm_y")
+@app.route("/youtube_script/process_confirm_y")
 def process_confirm_y():
     y_start = int(session["y_start"])
     y_end = int(session["y_end"])
     p = session["params"]
-    gh = GuitarHelper(p["title"], p["url"], p["output_root_dir"])
+    gh = YoutubeScriptBuilder(p["title"], p["url"], p["output_root_dir"])
     gh.set_bpm(p["bpm"])
     gh.set_time_range(p["start_time"], p["end_time"])
 
@@ -107,18 +117,17 @@ def process_confirm_y():
     return redirect(url_for("download_pdf"))
 
 
-@app.route("/download_pdf")
+@app.route("/youtube_script/download_pdf")
 def download_pdf():
     p = session.get("params")
     pdf_path = p.get("pdf_path")
     if pdf_path and os.path.exists(pdf_path):
-        # 다운로드 후 홈으로 이동시키는 HTML 렌더링
         return render_template("success.html", pdf_path=pdf_path)
     else:
         return render_template("error.html", message="PDF 파일이 존재하지 않습니다.")
 
 
-@app.route("/download_pdf_file")
+@app.route("/youtube_script/download_pdf_file")
 def download_pdf_file():
     p = session.get("params")
     pdf_path = p.get("pdf_path")
@@ -129,4 +138,5 @@ def download_pdf_file():
 
 
 if __name__ == "__main__":
-    app.run(debug=False)
+    app.run(host='0.0.0.0', port=8080)
+
