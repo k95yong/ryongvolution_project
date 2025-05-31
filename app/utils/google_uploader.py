@@ -7,7 +7,7 @@ def upload_to_drive(file_path, folder_id, credentials):
     # 구글 인증
     SCOPES = ['https://www.googleapis.com/auth/drive.file']
 
-    flow = InstalledAppFlow.from_client_secrets_file('google_credentials.json', SCOPES)
+    flow = InstalledAppFlow.from_client_secrets_file("C:\\Users\\k95yo\\PycharmProjects\\youtubeRecordGuitar\\config\\google_credentials.json", SCOPES)
     creds = flow.run_local_server(port=0)
 
     service = build('drive', 'v3', credentials=creds)

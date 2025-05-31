@@ -71,9 +71,9 @@ class YoutubeScriptBuilder:
     def upload_pdf_to_google_dirve(self, folder_id=None):
         if folder_id is None:
             folder_id = "1Gi7Y3GAV2t1tTFnGM5KMYN35eAd1D2Wi"
-        credentials = os.path.join(self.output_root_dir, "google_credentials.json")
+        credentials = os.path.join(self.output_root_dir, "config", "google_credentials.json")
         upload_to_drive(
             file_path=self.pdf_path,
-            folder_id=folder_id,  # 네가 준 드라이브 폴더 ID
+            folder_id=folder_id,
             credentials=credentials
         )
