@@ -1,15 +1,18 @@
 import os
+import tempfile
 
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from flask import send_file
+from werkzeug.utils import secure_filename
 
-from app.utils.util import get_root_dir
+from app.utils.util import get_root_dir, merge_jpgs_vertically_to_pdf
 from app.youtube_script.youtube_script_builder import YoutubeScriptBuilder
 
 app = Flask(__name__,
             template_folder=os.path.join(get_root_dir(), 'app', 'templates'),
             static_folder=os.path.join(get_root_dir(), 'static'))
 app.secret_key = "secret"  # 세션용 키
+UPLOAD_TEMP_DIR = tempfile.gettempdir()
 
 @app.route("/health_check")
 def health_check():
@@ -66,7 +69,6 @@ def confirm_y():
         y_start = int(request.form["y_start"])
         y_end = int(request.form["y_end"])
 
-        # 세션에서 파라미터 가져옴
         p = session.get("params")
         output_path = p['output_root_dir']
         gh = YoutubeScriptBuilder(p["title"], p["url"], output_path)
@@ -75,7 +77,6 @@ def confirm_y():
         gh.end_time = p["end_time"]
         gh.set_time_range(p["start_time"], p["end_time"])
 
-        # 이어서 처리
         gh.capture_video_frame(y_start, y_end)
         gh.remove_duplicate_imgs()
         pdf_path = gh.merge_jpgs_to_pdf()
@@ -136,7 +137,67 @@ def download_pdf_file():
     else:
         return render_template("error.html", message="파일이 존재하지 않습니다.")
 
+@app.route("/image_to_pdf")
+def image_to_pdf():
+    print("image_to_pdf()")
+    return render_template("upload_images.html", message="구현중..")
+
+@app.route('/upload_images', methods=['GET', 'POST'])
+def upload_images():
+    print("/upload_images()")
+
+    if 'pdf_files' not in request.files:
+        return "파일이 없습니다.", 400
+
+    files = request.files.getlist('pdf_files')
+    if not files or files[0].filename == '':  # 빈 파일 리스트 또는 첫 파일명이 비어있는 경우
+        return "업로드할 유효한 파일이 없습니다.", 400
+
+    target_dir = tempfile.mkdtemp(dir=UPLOAD_TEMP_DIR, prefix='pdf_uploads_')
+
+    uploaded_count = 0
+    for file in files:
+        if file.filename:
+            filename = secure_filename(file.filename)
+            file_path = os.path.join(target_dir, filename)
+            file.save(file_path)
+            uploaded_count += 1
+            print(f"파일 저장됨: {file_path}")
+
+    pdf_path = merge_jpgs_vertically_to_pdf(target_dir, target_dir, 'pdf_file')
+    send_file(pdf_path, as_attachment=True)
+
+    return render_template("upload_images.html", message="pdf__")
+
+@app.route("/merge_to_pdf", methods=['POST'])
+def merge_to_pdf():
+    print("/merge_to_pdf()")
+    if 'pdf_files' not in request.files:
+        return "파일이 없습니다.", 400
+
+    files = request.files.getlist('pdf_files')
+    if not files or files[0].filename == '':  # 빈 파일 리스트 또는 첫 파일명이 비어있는 경우
+        return "업로드할 유효한 파일이 없습니다.", 400
+
+    target_dir = tempfile.mkdtemp(dir=UPLOAD_TEMP_DIR, prefix='pdf_uploads_')
+
+    uploaded_count = 0
+    for file in files:
+        if file.filename:
+            filename = secure_filename(file.filename)
+            file_path = os.path.join(target_dir, filename)
+            file.save(file_path)
+            uploaded_count += 1
+            print(f"파일 저장됨: {file_path}")
+
+
+    pdf_path = merge_jpgs_vertically_to_pdf(target_dir, target_dir, 'pdf_file')
+    if pdf_path and os.path.exists(pdf_path):
+        return send_file(pdf_path, as_attachment=True)
+    else:
+        return render_template("error.html", message="파일이 존재하지 않습니다.")
+
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=8080)
+    app.run(host='0.0.0.0', port=80)
 

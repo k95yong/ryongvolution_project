@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>이미지 업로드</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"> {# 이전에 만들어둔 CSS 연결 #}
+    <style>
+        .upload-container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .upload-container h2 {
+            color: #007bff;
+            margin-bottom: 25px;
+        }
+        .upload-form label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .upload-form input[type="file"] {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .upload-form button {
+            background-color: #28a745;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: background-color 0.3s ease;
+        }
+        .upload-form button:hover {
+            background-color: #218838;
+        }
+        .message {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="upload-container">
+        <h2>🖼️ 이미지 파일 업로드</h2>
+        <form action="{{ url_for('merge_to_pdf') }}" method="POST" enctype="multipart/form-data" class="upload-form">
+            <label for="image_files">업로드할 이미지를 선택하세요 (다중 선택 가능):</label>
+            <input type="file" name="image_files" id="image_files" accept="image/*" multiple>
+            <button type="submit">합치기</button>
+        </form>
+
+        {% if message %}
+        <div class="message {{ 'success' if '성공' in message else 'error' }}">
+            {{ message }}
+        </div>
+        {% endif %}
+
+        <p><a href="{{ url_for('home') }}" style="display: block; margin-top: 30px; color: #007bff; text-decoration: none;">🏠 홈으로 돌아가기</a></p>
+    </div>
+</body>
+</html>
