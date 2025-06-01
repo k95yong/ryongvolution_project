@@ -1,8 +1,9 @@
 import os
 import json
 
-CACHE_PATH = os.path.join("video_cache", "cache.json")
+from app.utils.path_util import get_root_dir
 
+CACHE_PATH = os.path.join(get_root_dir(), "video_cache", "cache.json")
 
 def load_video_cache():
     if not os.path.exists(CACHE_PATH):
@@ -28,7 +29,7 @@ def add_video_to_cache(url, start_time, end_time, video_path):
     save_video_cache(cache)
 
 
-def get_total_cache_size_mb(cache_dir="video_cache"):
+def get_total_cache_size_mb(cache_dir=os.path.join(get_root_dir(), "video_cache")):
     total = 0
     for file in os.listdir(cache_dir):
         path = os.path.join(cache_dir, file)

@@ -21,7 +21,7 @@
 </head>
 <body>
   <h2>Step 1: 유튜브 정보 입력</h2>
-  <form action="/" method="post" onsubmit="return validateTimeRange()">
+  <form action="/youtube_script" method="post" onsubmit="return validateTimeRange()">
     <label>제목 (필수):</label>
     <input type="text" name="title" required><br>
 
@@ -53,7 +53,6 @@
 
     <label>BPM (선택):</label>
     <input type="number" name="bpm" placeholder="예: 90"><br>
-
     <button type="submit">가이드 이미지 생성</button>
   </form>
 

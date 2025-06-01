@@ -72,7 +72,7 @@
         </form>
 
         {% if message %}
-        <div class="message {{ 'success' if '성공' in message else 'error' }}">
+        <div class="message {{ 'error' if 'fail' in message else 'success' }}">
             {{ message }}
         </div>
         {% endif %}

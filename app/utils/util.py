@@ -4,13 +4,10 @@ import numpy as np
 import yt_dlp
 from skimage.metrics import structural_similarity as ssim
 
-from app.utils.cache_util import load_video_cache, add_video_to_cache, cleanup_cache
+from app.utils.cache_util import add_video_to_cache, cleanup_cache, load_video_cache
 
 
 def format_youtube_url(input_str):
-    """
-    유튜브 URL 또는 Video ID를 받아서 완전한 URL로 변환해 반환
-    """
     if input_str.startswith("http://") or input_str.startswith("https://"):
         return input_str
     else:
@@ -59,7 +56,6 @@ def download_youtube(url, output_path='downloaded_video.mp4', start_time=None, e
         import shutil
         shutil.move(temp_path, output_path)
 
-    # ✅ 다운로드 후 캐시에 추가
     add_video_to_cache(url, start_time, end_time, output_path)
     cleanup_cache(max_size_mb=5000)
     print(f"📝 캐시에 추가됨: {output_path}")
@@ -67,7 +63,6 @@ def download_youtube(url, output_path='downloaded_video.mp4', start_time=None, e
 
 
 def convert_to_hms(timestr):
-    """MM:SS 형식을 HH:MM:SS로 바꿔주는 함수"""
     if timestr and ":" in timestr:
         parts = timestr.split(":")
         if len(parts) == 2:
@@ -114,9 +109,6 @@ def extract_video_id(url):
 
 
 def create_lyrics_template(directory, filename="lyrics_template.txt"):
-    """
-    디렉토리에 가사 템플릿 파일을 생성 (이미 있으면 건너뜀)
-    """
     file_path = os.path.join(directory, filename)
     if os.path.exists(file_path):
         print(f"이미 파일이 존재합니다: {file_path}")
@@ -161,10 +153,10 @@ def show_capture_guide(video_path):
     ret, frame = cap.read()
 
     if ret:
-        for i in range(10, 100, 10):
+        for i in range(5, 100, 5):
             y = int(height * (i / 100))
             cv2.line(frame, (0, y), (width, y), (0, 255, 0), 1)
-            cv2.putText(frame, f"{i}%", (10, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+            cv2.putText(frame, f"{i}%", (10, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 1)
 
         cv2.imshow('Guide Frame', frame)
         cv2.waitKey(0)
@@ -298,7 +290,7 @@ def capture_video_frame(video_path, output_dir, interval_sec=5, y_start=60, y_en
         else:
             print(f"Failed to save {temp_save_path}")
 
-        print(f"bottom_crop size: {gray_image.shape}")
+        print(f"crop size: {gray_image.shape}")
         frame_idx += frame_interval
         image_count += 1
 
@@ -466,14 +458,4 @@ def is_same_sheet(img1, img2, threshold=0.95, quick_diff_threshold=30):
         print(f"정밀 비교 필터링: {score}")
     return score >= threshold
 
-def get_root_dir():
-    cur_path = os.path.abspath(os.getcwd())
-    while True:
-        git_dir = os.path.join(cur_path, '.git')
-        if os.path.isdir(git_dir):
-            return cur_path
-        parent_path = os.path.dirname(cur_path)
-        if parent_path == cur_path:
-            return None
-        cur_path = parent_path
 
