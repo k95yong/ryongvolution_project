@@ -25,8 +25,13 @@ def download_youtube(url, output_path='downloaded_video.mp4', start_time=None, e
         print(f"✅ 캐시된 영상 있음: {cached_path} → 다운로드 생략")
         return cached_path
 
+    my_user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Whale/4.31.304.16 Safari/537.36"
+
     temp_path = 'temp_downloaded_video.mp4'
     ydl_opts = {
+        'http_headers': {
+            'User-Agent': my_user_agent
+        },
         'format': 'bestvideo+bestaudio/best',  # 영상 + 오디오
         'merge_output_format': 'mp4',  # mp4로 병합 저장
         'outtmpl': temp_path,  # 저장 경로
