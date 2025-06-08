@@ -27,7 +27,7 @@ def download_youtube(url, output_path='downloaded_video.mp4', start_time=None, e
 
     my_user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Whale/4.31.304.16 Safari/537.36"
 
-    temp_path = 'temp_downloaded_video.mp4'
+    temp_path = os.path.join(get_root_dir(), 'temp', 'temp_downloaded_video.mp4')
     ydl_opts = {
         'format': 'bestvideo[height<=480]+bestaudio/best[height<=480]',
         'http_headers': {
