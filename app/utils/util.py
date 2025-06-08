@@ -31,7 +31,7 @@ def download_youtube(url, output_path='downloaded_video.mp4', start_time=None, e
         'merge_output_format': 'mp4',  # mp4로 병합 저장
         'outtmpl': temp_path,  # 저장 경로
         'quiet': False,  # 로그 출력
-        'cookies': os.path.join(get_root_dir(), 'config', 'cookies.txt')
+        'cookiefile': os.path.join(get_root_dir(), 'config', 'cookies.txt')
     }
     if not output_path.endswith('.mp4'):
         output_path = output_path + '.mp4'
