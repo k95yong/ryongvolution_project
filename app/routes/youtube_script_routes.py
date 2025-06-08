@@ -78,10 +78,12 @@ def download_pdf_file():
         return render_template("success.html", download_url=url_for("youtube_script.download_pdf_file_raw"))
     return render_template("error.html", message="파일이 존재하지 않습니다.")
 
+
 @youtube_script_bp.route("/download_pdf_file_raw")
 def download_pdf_file_raw():
     p = session.get("params")
     pdf_path = p.get("pdf_path")
     if pdf_path and os.path.exists(pdf_path):
-        return send_file(pdf_path, as_attachment=True)
+        return send_file(pdf_path, as_attachment=True, download_name=f"{p.get("title")}.pdf",
+                         mimetype="application/pdf")
     return render_template("error.html", message="파일이 존재하지 않습니다.")
