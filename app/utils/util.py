@@ -5,6 +5,7 @@ import yt_dlp
 from skimage.metrics import structural_similarity as ssim
 
 from app.utils.cache_util import add_video_to_cache, cleanup_cache, load_video_cache
+from app.utils.path_util import get_root_dir
 
 
 def format_youtube_url(input_str):
@@ -29,7 +30,8 @@ def download_youtube(url, output_path='downloaded_video.mp4', start_time=None, e
         'format': 'bestvideo+bestaudio/best',  # 영상 + 오디오
         'merge_output_format': 'mp4',  # mp4로 병합 저장
         'outtmpl': temp_path,  # 저장 경로
-        'quiet': False  # 로그 출력
+        'quiet': False,  # 로그 출력
+        'cookies': os.path.join(get_root_dir(), 'config', 'cookies.txt')
     }
     if not output_path.endswith('.mp4'):
         output_path = output_path + '.mp4'
