@@ -16,9 +16,6 @@
         <label>YouTube URL (필수):</label>
         <input type="text" name="url" required><br>
 
-        <label>저장 경로 (선택):</label>
-        <input type="text" name="output_root_dir" placeholder="예: C:/Users/..."><br>
-
         <label>시작 시간 (선택):</label>
         <input
                 type="text"
@@ -26,7 +23,8 @@
                 placeholder="예: 01:00"
                 pattern="^\d{2}:\d{2}$"
                 oninvalid="this.setCustomValidity('시작 시간은 00:00 형식으로 입력해 주세요')"
-                oninput="this.setCustomValidity('')"
+                oninput="formatTime(this)"
+                maxlength="5"
         /><br>
 
         <label>종료 시간 (선택):</label>
@@ -36,11 +34,10 @@
                 placeholder="예: 03:00"
                 pattern="^\d{2}:\d{2}$"
                 oninvalid="this.setCustomValidity('종료 시간은 00:00 형식으로 입력해 주세요')"
-                oninput="this.setCustomValidity('')"
+                oninput="formatTime(this)"
+                maxlength="5"
         /><br>
 
-        <label>BPM (선택):</label>
-        <input type="number" name="bpm" placeholder="예: 90"><br>
         <button type="submit">가이드 이미지 생성</button>
     </form>
 </div>
@@ -69,6 +66,21 @@
         }
 
         return true;
+    }
+
+    function formatTime(input) {
+        const pos = input.selectionStart;
+        let raw = input.value.replace(/\D/g, '');
+
+        if (raw.length >= 3) {
+            input.value = raw.slice(0, 2) + ':' + raw.slice(2, 4);
+        } else {
+            input.value = raw;
+        }
+
+        // 커서 위치 보정
+        let newPos = input.value.length;
+        input.setSelectionRange(newPos, newPos);
     }
 </script>
 </body>
