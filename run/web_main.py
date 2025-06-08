@@ -1,6 +1,6 @@
 import os
 import shutil
-import tempfile
+import uuid
 
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from flask import send_file
@@ -9,12 +9,17 @@ from werkzeug.utils import secure_filename
 from app.utils.path_util import get_root_dir
 from app.utils.util import merge_jpgs_vertically_to_pdf
 from app.youtube_script.youtube_script_builder import YoutubeScriptBuilder
+from config.settings import logger
 
 app = Flask(__name__,
             template_folder=os.path.join(get_root_dir(), 'app', 'templates'),
             static_folder=os.path.join(get_root_dir(), 'static'))
-app.secret_key = "secret"  # 세션용 키
-UPLOAD_TEMP_DIR = tempfile.gettempdir()
+app.secret_key = 'app-secret-key'
+
+UPLOAD_DIR = os.path.join(get_root_dir(), 'temp', 'uploads')
+MERGED_PDF_DIR = os.path.join(get_root_dir(), 'temp', 'merged_pdfs')
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+os.makedirs(MERGED_PDF_DIR, exist_ok=True)
 
 @app.route("/health_check")
 def health_check():
@@ -145,42 +150,56 @@ def image_to_pdf():
 
 @app.route("/merge_to_pdf", methods=['POST'])
 def merge_to_pdf():
-    print("/merge_to_pdf()")
-    target_dir = None
-    pdf_path = None
+    logger.info("/merge_to_pdf() called")
+    if 'image_files' not in request.files:
+        return "파일이 없습니다.", 400
+    files = request.files.getlist('image_files')
+    if not files or files[0].filename == '':
+        return "유효한 파일이 없습니다.", 400
+    session_id = str(uuid.uuid4())
+    target_dir = os.path.join(UPLOAD_DIR, session_id)
+    os.makedirs(target_dir)
     try:
-        if 'image_files' not in request.files:
-            return "파일이 없습니다.", 400
-
-        files = request.files.getlist('image_files')
-        if not files or files[0].filename == '':
-            return "업로드할 유효한 파일이 없습니다.", 400
-
-        target_dir = tempfile.mkdtemp(dir=UPLOAD_TEMP_DIR, prefix='pdf_source_images_')
-        print(target_dir)
-
-        uploaded_count = 0
         for file in files:
             if file.filename:
                 filename = secure_filename(file.filename)
-                file_path = os.path.join(target_dir, filename)
-                file.save(file_path)
-                uploaded_count += 1
-                print(f"파일 저장됨: {file_path}")
+                file.save(os.path.join(target_dir, filename))
 
-        pdf_path = merge_jpgs_vertically_to_pdf(target_dir, UPLOAD_TEMP_DIR, 'pdf_file')
+        pdf_filename = f"merged_{session_id}.pdf"
+        pdf_path = merge_jpgs_vertically_to_pdf(target_dir, MERGED_PDF_DIR, pdf_filename)
+
         if pdf_path and os.path.exists(pdf_path):
-            return send_file(pdf_path, as_attachment=True)
+            session['pdf_to_download'] = os.path.basename(pdf_path)
+            logger.info(session['pdf_to_download'])
+            return redirect(url_for('merge_success'))
         else:
-            return render_template("error.html", message="파일이 존재하지 않습니다.")
-    finally:
-        if pdf_path and target_dir and os.path.exists(target_dir):
-            try:
-                shutil.rmtree(target_dir)
-                print(f"임시 디렉토리 정리 완료: {target_dir}")
-            except Exception as e:
-                print(f"임시 디렉토리 정리 중 오류 발생: {e}")
+            logger.error("PDF 파일 생성 실패")
+            return render_template("error.html", message="PDF 파일 생성에 실패했습니다.")
 
+    finally:
+        if os.path.exists(target_dir):
+            shutil.rmtree(target_dir)
+            logger.info(f"임시 이미지 디렉토리 정리 완료: {target_dir}")
+
+
+@app.route("/merge_success")
+def merge_success():
+    pdf_filename = session.get('pdf_to_download')
+    if not pdf_filename:
+        return redirect(url_for('image_to_pdf'))  # 정보 없으면 업로드 페이지로
+
+    return render_template("success.html", download_url=url_for('download_file', filename=pdf_filename))
+
+
+# 실제 파일 다운로드를 처리하는 함수
+@app.route("/download/<filename>")
+def download_file(filename):
+    # MERGED_PDF_DIR 에서 파일을 찾아 다운로드시켜 줌
+    file_path = os.path.join(MERGED_PDF_DIR, filename)
+    if os.path.exists(file_path):
+        return send_file(file_path, as_attachment=True)
+    else:
+        return "파일을 찾을 수 없습니다.", 404
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=80)

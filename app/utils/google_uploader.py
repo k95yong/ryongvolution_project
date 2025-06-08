@@ -12,7 +12,6 @@ def upload_to_drive(file_path, folder_id, credentials):
 
     service = build('drive', 'v3', credentials=creds)
 
-    # 업로드할 파일 설정
     file_metadata = {
         'name': os.path.basename(file_path),
         'parents': [folder_id]  # 업로드할 폴더 ID
