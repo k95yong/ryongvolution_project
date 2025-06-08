@@ -7,9 +7,9 @@
 <body>
     <h2>✅ PDF 생성이 완료되었습니다!</h2>
     <p>
-        {% if pdf_path %} {# youtube_script_download_pdf에서 넘어오는 경우 #}
-        <a href="{{ url_for('download_pdf_file') }}">[PDF 다운로드]</a>
-        {% elif download_url %} {# merge_to_pdf에서 넘어오는 경우 #}
+        {% if pdf_path %}
+        <a href="{{ url_for('youtube_script.download_pdf_file') }}">[PDF 다운로드]</a>
+        {% elif download_url %}
         <a href="{{ download_url }}">[PDF 다운로드]</a>
         {% else %}
         <p>다운로드 링크를 찾을 수 없습니다.</p>

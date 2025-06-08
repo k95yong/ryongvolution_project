@@ -5,6 +5,7 @@ from app.utils.path_util import get_root_dir
 from app.utils.util import download_youtube, merge_jpgs_vertically_to_pdf, calculate_bar_duration, \
     show_capture_guide, capture_video_frame, remove_duplicate_img, show_capture_guide_web, apply_bar_numbering_in_dir, \
     extract_video_id
+from config.settings import logger
 
 
 class YoutubeScriptBuilder:
@@ -47,11 +48,12 @@ class YoutubeScriptBuilder:
         self.end_time = end_time
 
     def download_youtube(self):
-        download_youtube(self.url, start_time=self.start_time, end_time=self.end_time, output_path=self.video_path)
+        return download_youtube(self.url, start_time=self.start_time, end_time=self.end_time, output_path=self.video_path)
 
     def capture_video_frame(self, y_start=60, y_end=100, interval_sec=None):
         if interval_sec is None:
             interval_sec = self.interval_sec
+        logger.info(f"[capture_video_frame]: {self.video_path}")
         capture_video_frame(f"{self.video_path}.mp4", self.script_dir, interval_sec, y_start=y_start, y_end=y_end)
 
     def remove_duplicate_imgs(self):
@@ -63,7 +65,7 @@ class YoutubeScriptBuilder:
     def merge_jpgs_to_pdf(self):
         return merge_jpgs_vertically_to_pdf(self.script_dir, self.pdf_dir, self.title)
 
-    def show_capture_guide_web(self, guide_path=os.path.join(get_root_dir(), "static", "guide.jpg")):
+    def show_capture_guide_web(self, guide_path=os.path.join(get_root_dir(), "static", "img", "guide.jpg")):
         show_capture_guide_web(f"{self.video_path}.mp4", guide_path)
 
     def show_capture_guide(self):

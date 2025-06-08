@@ -6,6 +6,7 @@ from skimage.metrics import structural_similarity as ssim
 
 from app.utils.cache_util import add_video_to_cache, cleanup_cache, load_video_cache
 from app.utils.path_util import get_root_dir
+from config.settings import logger
 
 
 def format_youtube_url(input_str):
@@ -23,7 +24,7 @@ def download_youtube(url, output_path='downloaded_video.mp4', start_time=None, e
     cached_path = find_cached_video(url, start_time, end_time)
     if cached_path:
         print(f"✅ 캐시된 영상 있음: {cached_path} → 다운로드 생략")
-        return cached_path
+        return str(cached_path).rstrip('.mp4')
 
     my_user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Whale/4.31.304.16 Safari/537.36"
 
@@ -67,7 +68,7 @@ def download_youtube(url, output_path='downloaded_video.mp4', start_time=None, e
     add_video_to_cache(url, start_time, end_time, output_path)
     cleanup_cache(max_size_mb=5000)
     print(f"📝 캐시에 추가됨: {output_path}")
-    return output_path
+    return str(output_path).rstrip('.mp4')
 
 
 def convert_to_hms(timestr):
@@ -147,7 +148,7 @@ def show_capture_guide(video_path):
     cap = cv2.VideoCapture(video_path)
 
     if not cap.isOpened():
-        print("비디오 열기 실패")
+        logger.error(f"[캡처 가이드] 비디오 열기 실패: {video_path}")
         return
 
     fps = cap.get(cv2.CAP_PROP_FPS)
@@ -177,10 +178,11 @@ def show_capture_guide(video_path):
 
 
 def show_capture_guide_web(video_path, guide_img_path):
+    logger.info(f"show_capture_guide_web: {video_path}")
     cap = cv2.VideoCapture(video_path)
 
     if not cap.isOpened():
-        print("비디오 열기 실패")
+        logger.error(f"[캡처 가이드 웹] 비디오 열기 실패 {video_path}")
         return None
 
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -254,7 +256,7 @@ def capture_video_frame(video_path, output_dir, interval_sec=5, y_start=60, y_en
 
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
-        print("비디오 열기 실패")
+        logger.error(f"[캡처 프레임 생성] 비디오 열기 실패: {video_path}")
         return []
 
     fps = cap.get(cv2.CAP_PROP_FPS)

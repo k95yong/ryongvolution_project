@@ -67,7 +67,7 @@
 <body>
     <div class="upload-container">
         <h2>🖼️ 이미지 파일 업로드</h2>
-        <form action="{{ url_for('merge_to_pdf') }}" method="POST" enctype="multipart/form-data" class="upload-form">
+        <form action="{{ url_for('pdf.merge_to_pdf') }}" method="POST" enctype="multipart/form-data" class="upload-form">
             <label for="image_files">업로드할 이미지를 선택하세요 (다중 선택 가능):</label>
             <input type="file" name="image_files" id="image_files" accept="image/*" multiple>
             <button type="submit">합치기</button>
@@ -79,7 +79,7 @@
         </div>
         {% endif %}
 
-        <p><a href="{{ url_for('home') }}" style="display: block; margin-top: 30px; color: #007bff; text-decoration: none;">🏠 홈으로 돌아가기</a></p>
+        <p><a href="{{ url_for('common.home') }}" style="display: block; margin-top: 30px; color: #007bff; text-decoration: none;">🏠 홈으로 돌아가기</a></p>
     </div>
 </body>
 </html>
