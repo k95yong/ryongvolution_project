@@ -29,6 +29,7 @@ def download_youtube(url, output_path='downloaded_video.mp4', start_time=None, e
 
     temp_path = 'temp_downloaded_video.mp4'
     ydl_opts = {
+        'format': 'bestvideo[height<=480]+bestaudio/best[height<=480]',
         'http_headers': {
             'User-Agent': my_user_agent
         },
