@@ -1,0 +1,25 @@
+name: Auto Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v3
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.ORACLE_NEW_UBUNTU_SSH_KEY }}
+          script: |
+            cd /home/ubuntu/apps/youtube_scripts_helper
+            git pull origin main
+            systemctl restart kyj-app.service
