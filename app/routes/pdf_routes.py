@@ -3,7 +3,7 @@ import uuid
 import shutil
 from flask import Blueprint, request, render_template, redirect, url_for, session, send_file, current_app
 from werkzeug.utils import secure_filename
-from config.settings import logger
+from app.utils.log_util import logger
 from app.utils.util import merge_jpgs_vertically_to_pdf
 
 pdf_bp = Blueprint('pdf', __name__)

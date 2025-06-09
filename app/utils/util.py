@@ -6,7 +6,7 @@ from skimage.metrics import structural_similarity as ssim
 
 from app.utils.cache_util import add_video_to_cache, cleanup_cache, load_video_cache
 from app.utils.path_util import get_root_dir
-from config.settings import logger
+from app.utils.log_util import logger
 
 
 def format_youtube_url(input_str):

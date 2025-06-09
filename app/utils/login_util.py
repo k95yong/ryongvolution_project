@@ -7,7 +7,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 from app.utils.path_util import get_root_dir
-from config.settings import logger
+from app.utils.log_util import logger
 
 YOUTUBE_ID = "ykim7928@gmail.com"
 YOUTUBE_PW = "dydehfdl1!!"

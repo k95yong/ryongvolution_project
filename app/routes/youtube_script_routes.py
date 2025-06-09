@@ -1,8 +1,9 @@
 import os
 from flask import Blueprint, request, redirect, url_for, session, render_template, send_file
+
+from app.utils.log_util import logger
 from app.youtube_script.youtube_script_builder import YoutubeScriptBuilder
 from app.utils.path_util import get_root_dir
-from config.settings import logger
 
 youtube_script_bp = Blueprint('youtube_script', __name__)
 

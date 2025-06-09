@@ -5,7 +5,7 @@ from app.utils.path_util import get_root_dir
 from app.utils.util import download_youtube, merge_jpgs_vertically_to_pdf, calculate_bar_duration, \
     show_capture_guide, capture_video_frame, remove_duplicate_img, show_capture_guide_web, apply_bar_numbering_in_dir, \
     extract_video_id
-from config.settings import logger
+from app.utils.log_util import logger
 
 
 class YoutubeScriptBuilder:

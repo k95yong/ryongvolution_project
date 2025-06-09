@@ -1,6 +1,4 @@
-import logging.handlers
 import os
-import sys
 
 from app.utils.path_util import get_root_dir
 
@@ -15,11 +13,3 @@ MERGED_PDF_DIR = os.path.join(get_root_dir(), 'temp', 'merged_pdfs')
 SECRET_KEY = 'app-secret-key'
 os.makedirs(LOG_DIR, exist_ok=True)
 
-logger = logging.getLogger("flask_app")
-logger.setLevel(logging.INFO)
-
-if not logger.handlers:
-    handler = logging.StreamHandler(sys.stdout)
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
