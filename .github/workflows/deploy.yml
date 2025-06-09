@@ -22,4 +22,4 @@ jobs:
           script: |
             cd /home/ubuntu/apps/youtube_scripts_helper
             git pull origin main
-            systemctl restart kyj-app.service
+            sudo systemctl restart kyj-app.service
