@@ -47,7 +47,7 @@ def download_youtube(url, output_path='downloaded_video.mp4', start_time=None, e
         ydl.download([url])
 
     if start_time or end_time:
-        cmd = ['ffmpeg', '-y']
+        cmd = ['ffmpeg', '-hwaccel', 'none', '-y']
 
         if start_time:
             cmd += ['-ss', str(start_time)]
