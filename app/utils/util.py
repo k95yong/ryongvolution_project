@@ -1,12 +1,20 @@
+import os
+import re
+import shutil
 import subprocess
+import tempfile
 
+import cv2
+import fitz
 import numpy as np
 import yt_dlp
+from PIL import Image
+from PyPDF2 import PdfWriter, PdfReader
 from skimage.metrics import structural_similarity as ssim
 
 from app.utils.cache_util import add_video_to_cache, cleanup_cache, load_video_cache
-from app.utils.path_util import get_root_dir
 from app.utils.log_util import logger
+from app.utils.path_util import get_root_dir
 
 
 def format_youtube_url(input_str):
@@ -26,20 +34,27 @@ def download_youtube(url, output_path='downloaded_video.mp4', start_time=None, e
         print(f"✅ 캐시된 영상 있음: {cached_path} → 다운로드 생략")
         return str(cached_path).rstrip('.mp4')
 
-    my_user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Whale/4.31.304.16 Safari/537.36"
-
     temp_path = os.path.join(get_root_dir(), 'temp', 'temp_downloaded_video.mp4')
+
+    # my_user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Whale/4.31.304.16 Safari/537.36"
+
+    # ydl_opts = {
+    #     'format': 'bestvideo[height<=480]+bestaudio/best[height<=480]',
+    #     'http_headers': {
+    #         'User-Agent': my_user_agent
+    #     },
+    #     'merge_output_format': 'mp4',  # mp4로 병합 저장
+    #     'outtmpl': temp_path,  # 저장 경로
+    #     'quiet': False,  # 로그 출력
+    #     'cookiefile': os.path.join(get_root_dir(), 'config', 'cookies.txt')
+    # }
+
     ydl_opts = {
-        'format': 'bestvideo[height<=480]+bestaudio/best[height<=480]',
-        'http_headers': {
-            'User-Agent': my_user_agent
-        },
-        'format': 'bestvideo+bestaudio/best',  # 영상 + 오디오
-        'merge_output_format': 'mp4',  # mp4로 병합 저장
+        'format': 'bestvideo[height<=480]+bestaudio/best',
         'outtmpl': temp_path,  # 저장 경로
-        'quiet': False,  # 로그 출력
-        'cookiefile': os.path.join(get_root_dir(), 'config', 'cookies.txt')
+        'merge_output_format': 'mp4',
     }
+
     if not output_path.endswith('.mp4'):
         output_path = output_path + '.mp4'
 
@@ -62,7 +77,6 @@ def download_youtube(url, output_path='downloaded_video.mp4', start_time=None, e
         subprocess.run(cmd, check=True)
         os.remove(temp_path)
     else:
-        import shutil
         shutil.move(temp_path, output_path)
 
     add_video_to_cache(url, start_time, end_time, output_path)
@@ -96,9 +110,6 @@ def reset_directory(dir_path):
     if os.path.exists(dir_path):
         shutil.rmtree(dir_path)
     os.makedirs(dir_path)
-
-
-import re
 
 
 def extract_video_id(url):
@@ -212,11 +223,6 @@ def show_capture_guide_web(video_path, guide_img_path):
         return None
 
 
-
-import cv2
-import tempfile
-
-
 def seconds_to_timestamp(seconds):
     minutes = int(seconds // 60)
     secs = int(seconds % 60)
@@ -227,9 +233,6 @@ def format_bar_range(index, bars_per_image=4):
     start_bar = index * bars_per_image + 1
     end_bar = start_bar + bars_per_image - 1
     return f"{start_bar}-{end_bar}"
-
-
-import shutil
 
 
 def prepare_directory(output_dir, lyrics_filename="lyrics_template.txt"):
@@ -308,11 +311,6 @@ def capture_video_frame(video_path, output_dir, interval_sec=5, y_start=60, y_en
     return saved_files
 
 
-import os
-from PIL import Image
-from PyPDF2 import PdfWriter, PdfReader
-
-
 def merge_jpgs_vertically_to_pdf(image_dir, output_pdf_path, pdf_title, dpi=300):
     images = [os.path.join(image_dir, f) for f in sorted(os.listdir(image_dir)) if f.lower().endswith('.jpg')]
     if not images:
@@ -379,21 +377,16 @@ def calculate_bar_duration(bpm, note_info="4/4"):
     else:
         note_value, beat_count = note_info
 
-    # 한 note_value당 걸리는 시간 계산
     seconds_per_note = (60 / bpm) * (4 / note_value)
 
-    # 마디 하나 시간 = (note 시간) x (개수)
     bar_duration = seconds_per_note * beat_count
 
     return bar_duration
 
 
-import fitz  # pip install pymupdf
-
-
 def set_pdf_title(pdf_path, title):
     doc = fitz.open(pdf_path)
-    if not title.endwith(".pdf"):
+    if not title.endswith(".pdf"):
         title = title + ".pdf"
     doc.set_metadata({"title": title})
     doc.saveIncr()
@@ -467,5 +460,3 @@ def is_same_sheet(img1, img2, threshold=0.95, quick_diff_threshold=30):
     if score >= threshold:
         print(f"정밀 비교 필터링: {score}")
     return score >= threshold
-
-
