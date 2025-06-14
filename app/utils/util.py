@@ -53,6 +53,7 @@ def download_youtube(url, output_path='downloaded_video.mp4', start_time=None, e
         'format': 'bestvideo[height<=480]+bestaudio/best',
         'outtmpl': temp_path,  # 저장 경로
         'merge_output_format': 'mp4',
+        'cookiefile': os.path.join(get_root_dir(), 'config', 'cookies.txt'),
     }
 
     if not output_path.endswith('.mp4'):
