@@ -34,10 +34,28 @@ def youtube_script():
             "video_path": gh.video_path,
         }
 
-        return redirect(url_for(".confirm_y"))
+        return render_template("loading_download.html")
 
     return render_template("youtube_script_info.html")
 
+@youtube_script_bp.route("/start_download_and_process")
+def start_download_and_process():
+    p = session.get("params")
+    if not p:
+        logger.error("Session parameters missing for download and processing.")
+        return redirect(url_for(".youtube_script"))
+
+    gh = YoutubeScriptBuilder(p["title"], p["url"], p["output_root_dir"])
+    gh.set_bpm(p["bpm"])
+    gh.set_time_range(p["start_time"], p["end_time"])
+
+    gh.video_path = gh.download_youtube()
+    logger.info(f"[YouTube Video Downloaded] {gh.video_path}")
+
+    p["video_path"] = gh.video_path
+    session["params"] = p
+
+    return redirect(url_for(".confirm_y"))
 
 @youtube_script_bp.route("/confirm_y", methods=["GET", "POST"])
 def confirm_y():
