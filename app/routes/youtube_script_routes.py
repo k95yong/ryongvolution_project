@@ -18,13 +18,7 @@ def youtube_script():
         bpm = request.form.get("bpm", type=int) or 100
         output_root_dir = request.form.get("output_root_dir") or os.path.join(os.path.expanduser("~"), "Downloads")
 
-        gh = YoutubeScriptBuilder(title, url, output_root_dir)
-        gh.set_bpm(bpm)
-        gh.start_time = start_time
-        gh.end_time = end_time
-        gh.set_time_range(start_time, end_time)
-        # gh.video_path = gh.download_youtube()
-        # gh.show_capture_guide_web(guide_path=os.path.join(get_root_dir(), "static", "img", "guide.jpg"))
+        gh = YoutubeScriptBuilder(title, url)
 
         session["params"] = {
             "title": title, "url": url,
@@ -44,8 +38,7 @@ def start_download_and_process():
         logger.error("Session parameters missing for download and processing.")
         return redirect(url_for(".youtube_script"))
 
-    gh = YoutubeScriptBuilder(p["title"], p["url"], p["output_root_dir"])
-    gh.set_bpm(p["bpm"])
+    gh = YoutubeScriptBuilder(p["title"], p["url"])
     gh.set_time_range(p["start_time"], p["end_time"])
 
     gh.video_path = gh.download_youtube()
@@ -73,11 +66,10 @@ def process_confirm_y():
     y_start = int(session["y_start"])
     y_end = int(session["y_end"])
     p = session["params"]
-    gh = YoutubeScriptBuilder(p["title"], p["url"], p["output_root_dir"])
+    gh = YoutubeScriptBuilder(p["title"], p["url"])
     gh.video_path = p["video_path"]
     logger.info(f"[Confirm_y Video Path] {gh.video_path}")
 
-    gh.set_bpm(p["bpm"])
     gh.set_time_range(p["start_time"], p["end_time"])
     gh.capture_video_frame(y_start, y_end)
     gh.remove_duplicate_imgs()

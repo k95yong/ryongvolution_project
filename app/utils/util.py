@@ -3,6 +3,7 @@ import re
 import shutil
 import subprocess
 import tempfile
+import uuid
 
 import cv2
 import fitz
@@ -12,7 +13,6 @@ from PIL import Image
 from PyPDF2 import PdfWriter, PdfReader
 from skimage.metrics import structural_similarity as ssim
 
-from app.utils.cache_util import add_video_to_cache, cleanup_cache, load_video_cache
 from app.utils.log_util import logger
 from app.utils.path_util import get_root_dir
 
@@ -29,12 +29,12 @@ def download_youtube(url, output_path='downloaded_video.mp4', start_time=None, e
     start_time = convert_to_hms(start_time)
     end_time = convert_to_hms(end_time)
 
-    temp_path = os.path.join(get_root_dir(), 'temp', 'temp_downloaded_video.mp4')
+    temp_video_path = os.path.join(get_root_dir(), 'temp', f'tmp_video_{uuid.uuid4()}.mp4')
 
     ydl_opts = {
         'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
         'format': 'bestvideo[height<=480]+bestaudio/best',
-        'outtmpl': temp_path,
+        'outtmpl': temp_video_path,
         'merge_output_format': 'mp4',
         'cookiefile': os.path.join(get_root_dir(), 'config', 'cookies.txt'),
         'quiet': False,
@@ -50,21 +50,17 @@ def download_youtube(url, output_path='downloaded_video.mp4', start_time=None, e
 
     if start_time or end_time:
         cmd = ['ffmpeg', '-hwaccel', 'none', '-y']
-
         if start_time:
             cmd += ['-ss', str(start_time)]
-
-        cmd += ['-i', temp_path]
-
+        cmd += ['-i', temp_video_path]
         if end_time:
             cmd += ['-to', str(end_time)]
-
         cmd += ['-c', 'copy', output_path]
 
         subprocess.run(cmd, check=True)
-        os.remove(temp_path)
+        os.remove(temp_video_path)
     else:
-        shutil.move(temp_path, output_path)
+        os.rename(temp_video_path, output_path)
 
     return str(output_path).rstrip('.mp4')
 
@@ -74,20 +70,7 @@ def convert_to_hms(timestr):
         parts = timestr.split(":")
         if len(parts) == 2:
             return f"00:{parts[0].zfill(2)}:{parts[1].zfill(2)}"
-    return timestr  # 그대로 반환하거나 예외처리
-
-
-def find_cached_video(url, start_time, end_time):
-    cache = load_video_cache()
-    for entry in cache:
-        if (
-                entry["url"] == url and
-                entry["start_time"] == start_time and
-                entry["end_time"] == end_time and
-                os.path.exists(entry["video_path"])
-        ):
-            return entry["video_path"]
-    return None
+    return timestr
 
 
 def reset_directory(dir_path):
@@ -123,53 +106,6 @@ def create_lyrics_template(directory, filename="lyrics_template.txt"):
 
     print(f"가사 템플릿 파일 생성 완료: {file_path}")
     return file_path
-
-
-def get_video_duration(video_path):
-    cap = cv2.VideoCapture(video_path)
-    if not cap.isOpened():
-        print("영상 열기 실패")
-        return None
-
-    fps = cap.get(cv2.CAP_PROP_FPS)  # 초당 프레임 수
-    frame_count = cap.get(cv2.CAP_PROP_FRAME_COUNT)  # 전체 프레임 수
-    duration_sec = frame_count / fps  # 총 길이 (초)
-    cap.release()
-
-    return duration_sec
-
-
-def show_capture_guide(video_path):
-    cap = cv2.VideoCapture(video_path)
-
-    if not cap.isOpened():
-        logger.error(f"[캡처 가이드] 비디오 열기 실패: {video_path}")
-        return
-
-    fps = cap.get(cv2.CAP_PROP_FPS)
-    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-
-    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
-    middle_frame_idx = total_frames // 2
-    cap.set(cv2.CAP_PROP_POS_FRAMES, middle_frame_idx)
-    ret, frame = cap.read()
-
-    if ret:
-        for i in range(5, 100, 5):
-            y = int(height * (i / 100))
-            cv2.line(frame, (0, y), (width, y), (0, 255, 0), 1)
-            cv2.putText(frame, f"{i}%", (10, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 1)
-
-        cv2.imshow('Guide Frame', frame)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-    else:
-        print("가이드 프레임 읽기 실패")
-
-    cap.release()
-    return
 
 
 def show_capture_guide_web(video_path, guide_img_path):
@@ -211,12 +147,6 @@ def seconds_to_timestamp(seconds):
     minutes = int(seconds // 60)
     secs = int(seconds % 60)
     return f"{minutes:02d}-{secs:02d}"
-
-
-def format_bar_range(index, bars_per_image=4):
-    start_bar = index * bars_per_image + 1
-    end_bar = start_bar + bars_per_image - 1
-    return f"{start_bar}-{end_bar}"
 
 
 def prepare_directory(output_dir, lyrics_filename="lyrics_template.txt"):
@@ -344,6 +274,7 @@ def merge_jpgs_vertically_to_pdf(image_dir, output_pdf_path, pdf_title, dpi=300)
         output_pdf.write(f)
 
     print(f"PDF로 저장 완료: {pdf_file_path}")
+
     return pdf_file_path
 
 
