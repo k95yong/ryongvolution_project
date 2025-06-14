@@ -23,9 +23,8 @@ def youtube_script():
         gh.start_time = start_time
         gh.end_time = end_time
         gh.set_time_range(start_time, end_time)
-        gh.video_path = gh.download_youtube()
-        logger.info(f"[캐시 결과] {gh.video_path}")
-        gh.show_capture_guide_web(guide_path=os.path.join(get_root_dir(), "static", "img", "guide.jpg"))
+        # gh.video_path = gh.download_youtube()
+        # gh.show_capture_guide_web(guide_path=os.path.join(get_root_dir(), "static", "img", "guide.jpg"))
 
         session["params"] = {
             "title": title, "url": url,
