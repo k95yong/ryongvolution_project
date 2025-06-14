@@ -32,12 +32,13 @@ def download_youtube(url, output_path='downloaded_video.mp4', start_time=None, e
     temp_path = os.path.join(get_root_dir(), 'temp', 'temp_downloaded_video.mp4')
 
     ydl_opts = {
+        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
         'format': 'bestvideo[height<=480]+bestaudio/best',
-        'outtmpl': temp_path,  # 저장 경로
+        'outtmpl': temp_path,
         'merge_output_format': 'mp4',
         'cookiefile': os.path.join(get_root_dir(), 'config', 'cookies.txt'),
         'quiet': False,
-        'no_warnings': False,
+        # 'no_warnings': False,
         'verbose': True,
     }
 
