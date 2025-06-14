@@ -1,16 +1,5 @@
 {
   "videos": [
-    {
-      "url": "https://www.youtube.com/watch?v=3slG_msTYjk",
-      "start_time": "00:00:00",
-      "end_time": "00:00:11",
-      "video_path": "C:\\Users\\kyj\\Downloads\\ㅇㅇㅇ\\ㅇㅇㅇ_3slG_msTYjk.mp4"
-    },
-    {
-      "url": "https://www.youtube.com/watch?v=3slG_msTYjk",
-      "start_time": "00:00:00",
-      "end_time": "00:00:12",
-      "video_path": "C:\\Users\\kyj\\Downloads\\11\\11_3slG_msTYjk.mp4"
-    }
+
   ]
 }

@@ -29,11 +29,6 @@ def download_youtube(url, output_path='downloaded_video.mp4', start_time=None, e
     start_time = convert_to_hms(start_time)
     end_time = convert_to_hms(end_time)
 
-    cached_path = find_cached_video(url, start_time, end_time)
-    if cached_path:
-        print(f"✅ 캐시된 영상 있음: {cached_path} → 다운로드 생략")
-        return str(cached_path).rstrip('.mp4')
-
     temp_path = os.path.join(get_root_dir(), 'temp', 'temp_downloaded_video.mp4')
 
     ydl_opts = {
@@ -70,9 +65,6 @@ def download_youtube(url, output_path='downloaded_video.mp4', start_time=None, e
     else:
         shutil.move(temp_path, output_path)
 
-    add_video_to_cache(url, start_time, end_time, output_path)
-    cleanup_cache(max_size_mb=5000)
-    print(f"📝 캐시에 추가됨: {output_path}")
     return str(output_path).rstrip('.mp4')
 
 
