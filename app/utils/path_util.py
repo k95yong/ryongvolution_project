@@ -1,6 +1,5 @@
 import os
 
-
 def get_root_dir():
     cur_path = os.path.abspath(os.getcwd())
     while True:

@@ -24,7 +24,6 @@ def get_youtube_cookies():
     driver = uc.Chrome(options=options, use_subprocess=True)
 
     try:
-        # ... 이하 모든 로직은 100% 동일합니다 ...
         driver.get("https://accounts.google.com/signin/v2/identifier?service=youtube")
         id_input = WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, "input[type='email']"))
@@ -32,8 +31,6 @@ def get_youtube_cookies():
         id_input.send_keys(YOUTUBE_ID)
         driver.find_element(By.CSS_SELECTOR, "#identifierNext").click()
         logger.info(f"아이디 [{YOUTUBE_ID}]를 입력했습니다.")
-
-        # time.sleep(2)는 삭제하는 것이 더 안정적입니다.
 
         pw_input = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.CSS_SELECTOR, "input[type='password']"))

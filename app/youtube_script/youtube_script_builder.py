@@ -13,12 +13,15 @@ class YoutubeScriptBuilder:
         self.title = title
         self.url = url
 
+        self.resource_name = f"{title}_{extract_video_id(url)}"
         self.output_root_dir = os.path.join(get_root_dir(), 'temp')
         self.download_dir = os.path.join(get_root_dir(), 'temp', title)
         self.script_dir = os.path.join(get_root_dir(), 'temp', title, "captured_scripts")
         self.pdf_dir = os.path.join(get_root_dir(), 'temp', title, "pdfs")
         os.makedirs(self.download_dir, exist_ok=True)
-        self.video_path = os.path.join(str(self.output_root_dir), f"{title}_{extract_video_id(url)}")
+
+        self.video_path = os.path.join(str(self.output_root_dir), self.resource_name)
+        self.guide_img_path = os.path.join(get_root_dir(), 'static', 'img', f"{self.resource_name}.jpg")
         self.pdf_path = os.path.join(str(self.pdf_dir), "{}.pdf".format(title))
         self.start_time = None
         self.end_time = None
@@ -49,8 +52,8 @@ class YoutubeScriptBuilder:
     def merge_jpgs_to_pdf(self):
         return merge_jpgs_vertically_to_pdf(self.script_dir, self.pdf_dir, self.title)
 
-    def show_capture_guide_web(self, guide_path=os.path.join(get_root_dir(), "static", "img", "guide.jpg")):
-        show_capture_guide_web(f"{self.video_path}.mp4", guide_path)
+    def show_capture_guide_web(self):
+        show_capture_guide_web(f"{self.video_path}.mp4", self.guide_img_path)
 
     def upload_pdf_to_google_dirve(self, folder_id=None):
         if folder_id is None:

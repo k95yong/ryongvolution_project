@@ -5,6 +5,7 @@ from app.utils.path_util import get_root_dir
 
 CACHE_PATH = os.path.join(get_root_dir(), "video_cache", "cache.json")
 
+
 def load_video_cache():
     if not os.path.exists(CACHE_PATH):
         return []
@@ -18,16 +19,6 @@ def save_video_cache(entries):
     with open(CACHE_PATH, "w", encoding="utf-8") as f:
         json.dump({"videos": entries}, f, indent=2, ensure_ascii=False)
 
-def add_video_to_cache(url, start_time, end_time, video_path):
-    cache = load_video_cache()
-    cache.append({
-        "url": url,
-        "start_time": start_time,
-        "end_time": end_time,
-        "video_path": video_path
-    })
-    save_video_cache(cache)
-
 
 def get_total_cache_size_mb(cache_dir=os.path.join(get_root_dir(), "video_cache")):
     total = 0
@@ -35,27 +26,14 @@ def get_total_cache_size_mb(cache_dir=os.path.join(get_root_dir(), "video_cache"
         path = os.path.join(cache_dir, file)
         if path.endswith(".mp4") and os.path.isfile(path):
             total += os.path.getsize(path)
-    return total / (1024 * 1024)  # MB 단위
+    return total / (1024 * 1024)
 
 
-def cleanup_cache(max_size_mb=1000):
-    cache = load_video_cache()
-    # mp4 파일의 수정 시간 기준 정렬 (오래된 게 먼저)
-    entries_with_mtime = [
-        (entry, os.path.getmtime(entry["video_path"]))
-        for entry in cache if os.path.exists(entry["video_path"])
-    ]
-    entries_with_mtime.sort(key=lambda x: x[1])  # 오래된 순
-    total_cache_size_mb = get_total_cache_size_mb()
-    print(f"🧹 현재 Cached Video 총 용량: {total_cache_size_mb}")
-    while total_cache_size_mb > max_size_mb and entries_with_mtime:
-        entry, _ = entries_with_mtime.pop(0)
-        path = entry["video_path"]
-        try:
-            os.remove(path)
-            print(f"🧹 삭제됨: {path}")
-        except Exception as e:
-            print(f"❌ 삭제 실패: {e}")
-        cache.remove(entry)
-
-    save_video_cache(cache)
+def cleanup_files(resource_name: str):
+    video_resource_path = os.path.join(get_root_dir(), 'temp', f"{resource_name}.mp4")
+    guide_img_path = os.path.join(get_root_dir(), 'static', 'img', f"{resource_name}.jpg")
+    if os.path.exists(video_resource_path):
+        os.remove(video_resource_path)
+    if os.path.exists(guide_img_path):
+        os.remove(guide_img_path)
+    print(f"🧹 임시 파일 (Video, Guide img) 정리 완료")

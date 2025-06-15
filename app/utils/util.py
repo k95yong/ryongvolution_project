@@ -36,7 +36,7 @@ def download_youtube(url, output_path='downloaded_video.mp4', start_time=None, e
         'format': 'bestvideo[height<=480]+bestaudio/best',
         'outtmpl': temp_video_path,
         'merge_output_format': 'mp4',
-        'cookiefile': os.path.join(get_root_dir(), 'config', 'cookies.txt'),
+        # 'cookiefile': os.path.join(get_root_dir(), 'config', 'cookies.txt'),
         'quiet': False,
         # 'no_warnings': False,
         'verbose': True,
@@ -126,15 +126,12 @@ def show_capture_guide_web(video_path, guide_img_path):
     ret, frame = cap.read()
 
     if ret:
-        # 라인과 텍스트 추가
         for i in range(10, 100, 10):
             y = int(height * (i / 100))
             cv2.line(frame, (0, y), (width, y), (0, 255, 0), 1)
             cv2.putText(frame, f"{i}%", (10, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
 
-        # 저장 경로
         cv2.imwrite(guide_img_path, frame)
-        print(f"가이드 이미지 저장 완료: {guide_img_path}")
         cap.release()
         return guide_img_path
     else:
